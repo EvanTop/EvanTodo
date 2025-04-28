@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvanTodo</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6ee0;
+            --secondary-color: #f5f7ff;
+            --text-color: #333;
+            --light-text: #666;
+            --border-color: #e0e0e0;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px 15px;
+            margin-top: 15px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 26px;
+        }
+
+        .header p {
+            color: var(--light-text);
+            font-size: 13px;
+        }
+
+        .language-selector {
+            text-align: right;
+            margin-bottom: 15px;
+        }
+
+        .language-selector a {
+            color: var(--primary-color);
+            text-decoration: none;
+            margin-left: 8px;
+            font-size: 13px;
+        }
+
+        .language-selector a.active {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        .todo-actions-buttons {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .action-btn {
+            flex: 1;
+            min-width: 110px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            margin: 4px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .clear-btn {
+            background-color: #f8f9fa;
+            color: var(--light-text);
+        }
+
+        .clear-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        .clear-completed-btn {
+            background-color: #f0f6ff;
+            color: var(--light-text);
+        }
+
+        .clear-completed-btn:hover {
+            background-color: #e2ebf0;
+        }
+
+        .export-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .export-btn:hover {
+            background-color: #3a5bc8;
+        }
+
+        .import-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .import-btn:hover {
+            background-color: #3a5bc8;
+        }
+
+        .todo-input {
+            display: flex;
+            margin: 15px 0;
+        }
+
+        .todo-input input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius) 0 0 var(--border-radius);
+            font-size: 15px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .todo-input input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .todo-input button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 15px;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .todo-input button:hover {
+            background-color: #3a5bc8;
+        }
+
+        .todo-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .todo-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 8px;
+            background-color: white;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            overflow: hidden;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+
+        .todo-item-header {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+        }
+
+        .drag-handle {
+            cursor: move;
+            opacity: 0.6;
+            padding: 0 8px;
+            user-select: none;
+        }
+
+        .todo-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            margin: 0 8px 0 0;
+        }
+
+        .todo-content {
+            flex: 1;
+            min-width: 0;
+            padding-right: 8px;
+        }
+
+        .todo-text {
+            font-size: 15px;
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+            display: block;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: var(--light-text);
+        }
+
+        .todo-description {
+            padding: 0 12px 12px;
+            display: none;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .todo-description.show {
+            display: block;
+        }
+
+        .description-text {
+            font-size: 14px;
+            color: var(--light-text);
+            white-space: normal;
+            margin: 8px 0;
+            min-height: 16px;
+        }
+
+        .description-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #4a6ee0;
+        }
+
+        .description-actions button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .description-actions button:hover {
+            text-decoration: underline;
+        }
+
+        .todo-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            padding: 0 12px 12px;
+        }
+
+        .todo-actions button {
+            background: none;
+            border: none;
+            color: var(--light-text);
+            cursor: pointer;
+            font-size: 13px;
+            transition: var(--transition);
+            padding: 4px 8px;
+        }
+
+        .todo-actions button:hover {
+            color: var(--primary-color);
+        }
+
+        .todo-actions button.delete:hover {
+            color: #dc3545;
+        }
+
+        .footer {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--light-text);
+        }
+
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .todo-item-header {
+                padding: 8px;
+            }
+            .todo-actions-buttons {
+                flex-direction: column;
+            }
+            .action-btn {
+                width: 100%;
+                margin: 4px 0;
+            }
+            .todo-text {
+                font-size: 14px;
+            }
+            .todo-actions button {
+                padding: 4px 6px;
+                font-size: 12px;
+            }
+        }
+
+        .edit-mode {
+            background-color: #fff3cd;
+        }
+
+        .todo-item.dragging {
+            opacity: 0.5;
+            background-color: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <div class="header">
+                <h1>{{ currentLang.title }}</h1>
+                <p>{{ currentLang.subtitle }}</p>
+            </div>
+            
+            <div class="language-selector">
+                <a href="javascript:void(0)" :class="{ active: currentLang.lang === 'en' }" @click="switchLanguage('en')">EN</a>
+                <span></span>
+                <a href="javascript:void(0)" :class="{ active: currentLang.lang === 'zh' }" @click="switchLanguage('zh')">CN</a>
+            </div>
+            
+            <div class="todo-actions-buttons">
+                <button class="action-btn clear-btn" @click="clearTodos">{{ currentLang.clearButton }}</button>
+                <button class="action-btn clear-completed-btn" @click="clearCompleted">{{ currentLang.clearCompletedButton }}</button>
+                <button class="action-btn export-btn" @click="exportTodos">{{ currentLang.exportButton }}</button>
+                <button class="action-btn import-btn" @click="importTodos">{{ currentLang.importButton }}</button>
+            </div>
+            
+            <div class="todo-input">
+                <input 
+                    v-model="newTodo" 
+                    @keyup.enter="addTodo" 
+                    :placeholder="currentLang.inputPlaceholder"
+                >
+                <button @click="addTodo">{{ currentLang.addButton }}</button>
+            </div>
+            
+            <ul class="todo-list" id="todoList">
+                <li 
+                    v-for="(todo, index) in todos" 
+                    :key="todo.id"
+                    :class="[{ 'completed': todo.completed, 'edit-mode': editingTodo === todo.id }]"
+                    draggable="true"
+                    @dragstart="dragStart(index)"
+                    @dragover.prevent
+                    @drop="drop(index)"
+                    @dblclick="toggleEditTodo(todo.id)"
+                >
+                    <div class="todo-item-header">
+                        <span class="drag-handle">☰</span>
+                        <input 
+                            type="checkbox" 
+                            class="todo-checkbox" 
+                            :checked="todo.completed" 
+                            @change="toggleComplete(todo.id)"
+                        >
+                        <div class="todo-content">
+                            <div @click="toggleDescription(todo.id)">
+                                <span v-if="editingTodo !== todo.id" class="todo-text">{{ todo.text }}</span>
+                                <input 
+                                    v-else 
+                                    type="text" 
+                                    v-model="editTodoText" 
+                                    @keyup.enter="updateTodo(todo.id)"
+                                    @blur="updateTodo(todo.id)"
+                                    ref="editInput"
+                                    style="flex:1; min-width: 0"
+                        >
+                            </div>
+                        </div>
+                        <div class="todo-actions">
+                            <button @click.stop="toggleComplete(todo.id)">
+                            {{ todo.completed ? currentLang.undoButton : currentLang.completeButton }}
+                               </button>
+                                <button class="delete" @click.stop="deleteTodo(todo.id)">
+                            {{ currentLang.deleteButton }}
+                                </button>
+                        </div>
+                    </div>
+                    
+                    <div class="todo-description" :class="{ show: todo.showDescription }">
+                        <div class="description-text">
+                            <div v-if="editingDescription !== todo.id">{{ todo.description }}</div>
+                            <input 
+                                v-else 
+                                type="text" 
+                                v-model="editDescriptionText" 
+                                @keyup.enter="updateDescription(todo.id)"
+                                @blur="updateDescription(todo.id)"
+                                class="description-input"
+                                style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: var(--border-radius);"
+                            >
+                        </div>
+                        <div class="description-actions">
+                            <span v-if="editingDescription !== todo.id" @click="toggleEditDescription(todo.id)">{{ currentLang.editDescription }}</span>
+                            <div v-else>
+                                <button @click="updateDescription(todo.id)">保存</button>
+                                <button @click="cancelEditDescription(todo.id)">取消</button>
+                            </div>
+                            <span @click="toggleDescription(todo.id)"></span>
+                        </div>
+                    </div>
+                    
+
+
+                    
+                </li>
+            </ul>
+            
+            <div class="footer">
+                Data stored locally in your browser. 
+                <a href="https://evan.xin" target="_blank">Designer Evan</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                newTodo: '',
+                todos: [],
+                editingTodo: null,
+                editTodoText: '',
+                editingDescription: null,
+                editDescriptionText: '',
+                dragIndex: -1,
+                languages: {
+                    en: {
+                        lang: 'en',
+                        title: 'EvanTodo',
+                        subtitle: 'Minimalist, No-Login Required Web Todo App',
+                        inputPlaceholder: 'Add a new task...',
+                        addButton: 'Add',
+                        undoButton: 'Undo',
+                        completeButton: 'Complete',
+                        deleteButton: 'Delete',
+                        clearButton: 'Clear All',
+                        clearCompletedButton: 'Clear Completed',
+                        exportButton: 'Export Data',
+                        importButton: 'Import Data',
+                        editDescription: 'Edit description',
+                        cancelEditDescription: 'Cancel',
+                        saveDescription: 'Save'
+                    },
+                    zh: {
+                        lang: 'zh',
+                        title: 'EvanTodo',
+                        subtitle: '极简、无需登录的网页待办事项应用',
+                        inputPlaceholder: '添加新任务...',
+                        addButton: '添加',
+                        undoButton: '撤销',
+                        completeButton: '完成',
+                        deleteButton: '删除',
+                        clearButton: '清空全部',
+                        clearCompletedButton: '清空已完成',
+                        exportButton: '数据导出',
+                        importButton: '数据导入',
+                        editDescription: '编辑描述',
+                        cancelEditDescription: '取消',
+                        saveDescription: '保存'
+                    }
+                },
+                currentLang: 'en'
+            },
+            created() {
+                const savedTodos = localStorage.getItem('todos');
+                if (savedTodos) {
+                    this.todos = JSON.parse(savedTodos);
+                } else {
+                    // Initialize with sample todos
+
+                }
+                
+                const savedLang = localStorage.getItem('appLanguage');
+                if (savedLang) {
+                    this.currentLang = this.languages[savedLang];
+                } else {
+                    const browserLang = navigator.language || navigator.userLanguage;
+                    this.currentLang = browserLang.includes('zh') ? 
+                                      this.languages.zh : 
+                                      this.languages.en;
+                }
+            },
+            methods: {
+                switchLanguage(lang) {
+                    this.currentLang = this.languages[lang];
+                    localStorage.setItem('appLanguage', lang);
+                },
+                addTodo() {
+                    if (this.newTodo.trim() === '') return;
+                    
+                    this.todos.push({
+                        id: Date.now(),
+                        text: this.newTodo.trim(),
+                        description: '',
+                        completed: false,
+                        showDescription: false
+                    });
+                    
+                    this.newTodo = '';
+                    this.saveTodos();
+                },
+                addSampleTodo() {
+                // Add sample todo for demonstration
+                    this.todos.push({
+                        id: 1,
+                        text: '示例任务',
+                        description: '这是一个示例任务的详细描述。您可以单击任务名称查看详细描述，双击任务名称可以编辑任务标题。',
+                        completed: false,
+                        showDescription: false
+                    });
+                },
+
+                deleteTodo(id) {
+                    this.todos = this.todos.filter(todo => todo.id !== id);
+                    this.saveTodos();
+                },
+                toggleComplete(id) {
+                    this.todos = this.todos.map(todo => 
+                        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+                    );
+                    this.saveTodos();
+                },
+                toggleEditTodo(id) {
+                    if (this.editingTodo === id) {
+                        this.editingTodo = null;
+                        return;
+                    }
+                    
+                    this.editingTodo = id;
+                    this.editTodoText = this.todos.find(todo => todo.id === id).text;
+                    
+                    setTimeout(() => {
+                        if (this.editingTodo === id) {
+                            this.$refs.editInput[0].focus();
+                        }
+                    }, 100);
+                },
+                updateTodo(id) {
+                    this.todos = this.todos.map(todo => 
+                        todo.id === id ? { ...todo, text: this.editTodoText } : todo
+                    );
+                    this.editingTodo = null;
+                    this.saveTodos();
+                },
+                toggleDescription(id) {
+                    this.todos = this.todos.map(todo => 
+                        todo.id === id ? { ...todo, showDescription: !todo.showDescription } : todo
+                    );
+                    this.saveTodos();
+                },
+                toggleEditDescription(id) {
+                    if (this.editingDescription === id) {
+                        this.editingDescription = null;
+                        return;
+                    }
+                    
+                    this.editingDescription = id;
+                    this.editDescriptionText = this.todos.find(todo => todo.id === id).description;
+                    
+                    setTimeout(() => {
+                        if (this.editingDescription === id) {
+                            const descriptionInput = document.querySelector(`.description-input[style]`);
+                            if (descriptionInput) descriptionInput.focus();
+                        }
+                    }, 100);
+                },
+                updateDescription(id) {
+                    this.todos = this.todos.map(todo => 
+                        todo.id === id ? { ...todo, description: this.editDescriptionText } : todo
+                    );
+                    this.editingDescription = null;
+                    this.saveTodos();
+                },
+                cancelEditDescription(id) {
+                    this.editingDescription = null;
+                },
+                clearTodos() {
+                    if (confirm(this.currentLang.lang === 'en' ? 
+                               'Are you sure you want to clear all tasks?' : 
+                               '您确定要清空所有任务吗？')) {
+                        this.todos = [];
+                        this.saveTodos();
+                    }
+                },
+                clearCompleted() {
+                    if (confirm(this.currentLang.lang === 'en' ? 
+                               'Are you sure you want to clear completed tasks?' : 
+                               '您确定要清空已完成的任务吗？')) {
+                        this.todos = this.todos.filter(todo => !todo.completed);
+                        this.saveTodos();
+                    }
+                },
+                exportTodos() {
+                    const dataStr = JSON.stringify(this.todos, null, 2);
+                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'evantodo-export.json';
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                },
+                importTodos() {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    
+                    input.onchange = e => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        
+                        const reader = new FileReader();
+                        reader.onload = event => {
+                            try {
+                                const importedTodos = JSON.parse(event.target.result);
+                                if (Array.isArray(importedTodos)) {
+                                    // Set showDescription to false for imported todos
+                                    const todosWithDefaults = importedTodos.map(todo => ({
+                                        ...todo,
+                                        showDescription: todo.showDescription || false
+                                    }));
+                                    
+                                    this.todos = [...this.todos, ...todosWithDefaults];
+                                    this.saveTodos();
+                                    alert(this.currentLang.lang === 'en' ? 
+                                          'Todos imported successfully!' : 
+                                          '待办事项导入成功！');
+                                } else {
+                                    alert(this.currentLang.lang === 'en' ? 
+                                          'Invalid file format' : 
+                                          '文件格式不正确');
+                                }
+                            } catch (error) {
+                                alert(this.currentLang.lang === 'en' ? 
+                                      'Error reading file' : 
+                                      '读取文件出错');
+                            }
+                        };
+                        reader.readAsText(file);
+                    };
+                    
+                    document.body.appendChild(input);
+                    input.click();
+                    document.body.removeChild(input);
+                },
+                dragStart(index) {
+                    this.dragIndex = index;
+                },
+                drop(index) {
+                    if (this.dragIndex !== -1 && this.dragIndex !== index) {
+                        const draggedItem = this.todos[this.dragIndex];
+                        this.todos.splice(this.dragIndex, 1);
+                        this.todos.splice(index, 0, draggedItem);
+                        this.saveTodos();
+                        this.dragIndex = -1;
+                    }
+                },
+                saveTodos() {
+                    localStorage.setItem('todos', JSON.stringify(this.todos));
+                }
+            }
+        });
+    </script>
+</body>
+</html>
