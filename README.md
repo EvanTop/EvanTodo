@@ -17,7 +17,11 @@
 
 EvanTodo 是一款简洁、直观且无需登录的网页待办事项应用，旨在帮助用户高效地管理和追踪日常任务。它提供了一系列实用的功能，让用户能够轻松地创建、编辑、排序和管理任务。
 
+## 下载地址
 
+建议在[Releases](https://github.com/EvanTop/EvanTodo/releases)中直接下载，之后如果有更新的话，都会在这里面。
+
+## Todo样式（2.0会稍微有些不一样，自己发现吧！）
 | PHONE | PC |
 |---|---|
 |![Image description](https://i.imgur.com/lo2n8YK.png)|![Image description](https://i.imgur.com/79MIM2K.png)| 
